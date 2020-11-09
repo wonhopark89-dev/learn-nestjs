@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Movie } from './entities/movie.entity';
 
 @Injectable()
@@ -9,13 +9,17 @@ export class MoviesService {
     return this.movies;
   }
 
-  getOne(id: string) {
-    return this.movies.find((movie) => movie.id === +id); // `+` mean : string convert to int
+  getOne(id: string): Movie {
+    const movie = this.movies.find((movie) => movie.id === +id); // `+` mean : string convert to int
+    if (!movie) {
+      throw new NotFoundException(`Moive with ID ${id} not found`);
+    }
+    return movie;
   }
 
-  deleteOne(id: string): boolean {
-    this.movies.filter((movie) => movie.id !== +id);
-    return true;
+  deleteOne(id: string) {
+    this.getOne(id);
+    this.movies = this.movies.filter((movie) => movie.id !== +id); // update fake db
   }
 
   create(movieData) {
@@ -23,5 +27,11 @@ export class MoviesService {
       id: this.movies.length + 1,
       ...movieData,
     });
+  }
+
+  update(id: string, movieData) {
+    const movie = this.getOne(id);
+    this.deleteOne(id);
+    this.movies.push({ ...movie, ...movieData }); // 임시방편으로 기존꺼를 삭제하고 그냥 업데이트함(연습용)
   }
 }
